@@ -12,6 +12,7 @@ The projects below shaped the design, and are credited for the ideas named.
 | [ankurgoels/trader-skills-india](https://github.com/ankurgoels/trader-skills-india) (MIT) | NSE tick bands, a two-leg entry plus stop order, dry-run by default. |
 | [techfreakworm/kite-connect-mcp](https://github.com/techfreakworm/kite-connect-mcp) | A kill-switch file that only a human clears. |
 | [javajack/skill-algotrader](https://github.com/javajack/skill-algotrader) | Tick rounding as a first-class rule. |
+| [lemomo-ai/lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar) | The "Mascot Screencast" film style followed by the README walkthrough. The film's code and its pixel-bull mascot are original. |
 
 If you copy code from any of them into your fork, keep their licence notice with it.
 

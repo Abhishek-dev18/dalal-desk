@@ -10,12 +10,12 @@ Built for small accounts (the defaults assume Rs 20,000) and for intraday, swing
 > and the rules visible. Most retail day traders lose money. Use money you can afford to lose.
 
 <p align="center">
-  <img src="docs/demo.svg" alt="Animated Claude Code session: Dalal Desk scans, plans, simulates, sizes, risk-checks, places a paper trade and reviews it" width="100%">
+  <img src="docs/demo.gif" alt="Animated walkthrough: in a Claude Code window, Dalal Desk scans, plans, simulates, sizes, risk-checks, places a paper trade and reviews it, with a pixel bull acting out each step" width="100%">
 </p>
 
-*Command output above is real, from synthetic sample data (`python3 tools/make_demo.py` rebuilds it).
+*Every number above is real output on synthetic sample data; the prompts and replies are scripted.
 The simulation said skip, the demo took the trade on paper anyway, and it was stopped out with the
-loss inside the limit.*
+loss inside the limit. [Full-quality video](docs/demo.mp4) · [how it was made](tools/film/README.md)*
 
 ## What it does
 

@@ -1,0 +1,310 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dalal Desk · walkthrough</title>
+<style>
+@font-face{font-family:Inter;src:url(fonts/Inter.ttf);font-weight:100 900}
+@font-face{font-family:Mono;src:url(fonts/JetBrainsMono.ttf);font-weight:100 800}
+:root{--bg:#0d1117;--bar:#161b22;--line:#30363d;--ink:#e6edf3;--dim:#8b949e;--green:#3fb950;--red:#f85149;--amber:#e3b341;--blue:#79c0ff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;overflow:hidden;background:#000}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;overflow:hidden}
+#world{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0}
+#wall{position:absolute;inset:0;background:
+  radial-gradient(520px 380px at 86% 88%,rgba(255,153,85,.34),transparent 70%),
+  radial-gradient(620px 420px at 8% 4%,rgba(96,165,250,.36),transparent 70%),
+  linear-gradient(160deg,#27305c 0%,#1b2145 50%,#141833 100%)}
+#win{position:absolute;left:90px;top:44px;width:1100px;height:608px;border-radius:12px;background:var(--bg);
+  box-shadow:0 34px 90px rgba(0,0,0,.6),0 0 0 1px #3a4250;overflow:hidden}
+#bar{position:relative;height:38px;background:var(--bar);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;font:500 13px Inter;color:var(--dim)}
+.dot{width:12px;height:12px;border-radius:50%;margin-right:8px}
+#title{position:absolute;left:0;right:0;text-align:center;letter-spacing:.1px}
+#tag{margin-left:auto;border:1px solid var(--line);border-radius:10px;padding:2px 9px;font-size:11.5px;position:relative}
+#body{position:absolute;left:0;right:0;top:38px;bottom:0;font:400 19px/31px Mono;color:var(--ink)}
+.chapter{position:absolute;left:34px;right:34px;top:22px;display:none}
+.row{height:31px;white-space:pre;visibility:hidden}
+.row.on{visibility:visible}
+.d{color:var(--dim)}.g{color:var(--green)}.r{color:var(--red)}.a{color:var(--amber)}.b{color:var(--blue)}
+b{font-weight:700}
+.card{height:80px;width:560px;border:1.5px solid #3b4452;border-radius:10px;padding:8px 18px;background:#11161d}
+.card div{height:31px}
+#badge{display:inline-block;margin-left:560px;height:30px;line-height:27px;padding:0 14px;border-radius:8px;border:1.5px solid #3b4452;color:var(--dim);font-weight:700}
+#badge.pass{border-color:var(--green);color:var(--green);background:#12261e}
+#track{display:inline-block;vertical-align:middle;margin-left:96px;width:400px;height:12px;border-radius:6px;background:#21262d;position:relative;top:-1px}
+#fill{display:block;height:12px;border-radius:6px;background:var(--amber);width:0}
+#input{position:absolute;left:34px;right:34px;bottom:24px;height:50px;border:1.5px solid #3b4452;border-radius:10px;padding:0 16px;display:flex;align-items:center;white-space:pre}
+#caret{display:inline-block;width:10px;height:23px;background:var(--ink);margin-left:1px}
+#dim{position:absolute;inset:0;background:#05070b;opacity:0;pointer-events:none}
+#mascot{position:absolute;width:110px;height:100px;image-rendering:pixelated;transform-origin:50% 100%}
+.glass{position:absolute;background:rgba(18,22,30,.78);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(14px);color:#eef2f7;border-radius:999px;font-family:Inter}
+#pill{left:14px;top:5px;padding:7px 16px 7px 12px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px}
+#pill i{font-style:normal;font:700 12px Mono;background:#9d6bff;color:#12091f;border-radius:999px;padding:2px 8px}
+#cap{left:50%;top:668px;transform:translateX(-50%);padding:9px 22px;font-size:19px;font-weight:500;white-space:nowrap}
+#keys{right:26px;top:668px;padding:7px 12px;display:flex;gap:6px;border-radius:12px}
+#keys span{font:600 15px Mono;min-width:26px;height:26px;line-height:26px;text-align:center;background:rgba(255,255,255,.12);border-radius:6px;padding:0 6px}
+#lapse{right:14px;top:5px;padding:7px 14px;font:700 14px Mono;color:#12091f;background:#e3b341;border:none}
+#vig{position:absolute;inset:0;pointer-events:none;opacity:0}
+#wipe{position:absolute;left:0;top:0}
+</style></head>
+<body>
+<div id="stage">
+  <div id="world">
+    <div id="wall"></div>
+    <div id="win">
+      <div id="bar"><span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span>
+        <span id="title">Claude Code — dalal-desk</span><span id="tag">sample data · paper mode</span></div>
+      <div id="body"><div id="chapters"></div>
+        <div id="input"><span class="b"><b>&gt; </b></span><span id="typed"></span><span id="caret"></span></div>
+      </div>
+      <div id="dim"></div>
+    </div>
+    <canvas id="mascot" width="22" height="20"></canvas>
+  </div>
+  <div id="vig"></div>
+  <div id="pill" class="glass"><i id="pn">01</i><span id="pt">Scan</span></div>
+  <div id="lapse" class="glass">▶▶ 10,000×</div>
+  <div id="cap" class="glass"></div>
+  <div id="keys" class="glass"></div>
+  <canvas id="wipe" width="1280" height="720"></canvas>
+</div>
+<script>
+const DUR = 41.0, $ = s => document.querySelector(s);
+const u = (text, ta, tb) => ({k:'u', text, ta, tb, at: tb + 0.2});
+const sp = () => ({k:'sp'});
+const tl = (cmd, at) => ({k:'t', cmd, at});
+const o = (html, at, id, first, cls) => ({k:'o', html, at, id, first, cls});
+const say = (html, at, cont, cls) => ({k:'s', html, at, cont, cls});
+const CH = [
+ {name:'Scan', t0:0, rows:[
+   u('find me an intraday setup', 1.4, 2.9), sp(), tl('dd.py scan intraday', 3.3),
+   o('SYMBOL   SCORE   RANGE         SIDE   REL.VOL', 3.6, 'c1h', true, 'd'),
+   o('ALPHA     74.1   above_range   <span class=g>BUY </span>      1.01', 3.9, 'c1a'),
+   o('DEMO      71.3   above_range   <span class=g>BUY </span>      1.05', 4.2, 'c1b'),
+   o('BETA      71.3   below_range   <span class=r>SELL</span>      1.05', 4.5, 'c1c'),
+   sp(), say('ALPHA and DEMO closed above their opening range.', 5.7)]},
+ {name:'Odds', t0:7.6, rows:[
+   u('plan DEMO and tell me the odds', 8.1, 9.7), sp(), tl('dd.py plan orb DEMO --r 3 --stop-mode far', 10.1),
+   o('entry 653.90  stop <span class=r>649.85</span>  target <span class=g>666.05</span>', 10.5, 'c2p', true),
+   sp(), tl('dd.py sim', 11.1),
+   {k:'bar', at:11.4, id:'c2bar'},
+   o('target first <span class=g>3.0%</span>   stop first <span class=r>45.3%</span>', 13.5, 'c2r1'),
+   o('mean result -0.165 R after charges', 13.9, 'c2r2', false, 'a'),
+   sp(), say('Negative after charges. My read: skip.', 14.7, false, 'a')]},
+ {name:'Size and risk gate', t0:16.2, rows:[
+   u('take it on paper anyway. how many shares?', 16.6, 18.5), sp(), tl('dd.py size', 18.9),
+   o('30 shares   position ₹19,617', 19.2, 'c3a', true),
+   o('max loss <span class=r>₹142.27</span>  (limit ₹200)', 19.5, 'c3m'),
+   sp(), tl('dd.py gate', 21.7),
+   o('<span class=g>✓</span> daily loss stop   <span class=g>✓</span> trades today 0 of 3', 22.0, 'c3j', true),
+   o('<span class=g>✓</span> reward to risk 2.41   <span class=g>✓</span> entry window', 22.3, 'c3k'),
+   {k:'badge', at:22.6, id:'c3b'}]},
+ {name:'Approve', t0:24.6, rows:[
+   u('place it', 25.0, 25.5), sp(), tl('dd.py ticket new', 25.9),
+   {k:'card', at:26.3, id:'c4card'},
+   sp(), say('To approve, type: <b class=b>YES 08ddc0bf</b>', 27.0),
+   sp(), u('YES 08ddc0bf', 27.9, 28.9), sp(), tl('dd.py ticket execute 08ddc0bf', 29.3),
+   o('placed   paper   filled at 653.90', 29.7, 'c4ok', true, 'g')]},
+ {name:'Review', t0:32.4, rows:[
+   u('how did it go?', 32.8, 33.6), sp(), tl('dd.py paper settle', 34.0),
+   o('exit 649.85   stop hit', 34.3, 'c5e', true, 'r'),
+   o('net ₹-142.27   -1.17 R', 34.6, 'c5n', false, 'r'),
+   sp(), say('Stopped out. The simulation had warned.', 36.0),
+   say('The loss stayed inside the ₹200 limit.', 36.5, true),
+   say('₹257.73 of today\'s loss budget is left.', 37.0, true, 'd'),
+   sp(), o('github.com/Abhishek-dev18/dalal-desk', 37.9, 'c5l', false, 'b')]},
+];
+const CAPS = [
+ [3.7, 7.0, 'It ranks NSE stocks by range breaks, volume and gaps.'],
+ [11.3, 13.6, 'Then it replays the rest of the day 10,000 times.'],
+ [13.9, 15.8, 'Here the odds say skip.'],
+ [19.9, 21.7, 'Loss at the stop, charges included, stays under 1% of capital.'],
+ [22.3, 24.3, 'Sixteen checks. One failure blocks the trade.'],
+ [27.0, 29.0, 'Nothing is placed until you type the approval.'],
+ [29.8, 31.9, 'Paper mode by default. Live trading is opt-in.'],
+ [34.5, 36.3, 'A losing trade, on sample data.'],
+ [36.7, 40.6, 'The loss stayed inside the limit.'],
+];
+// mascot: arrive at time t after a move of d seconds. kind: cut | drop | jump
+const WP = [
+ {t:1.0, d:.7, el:'#input', fx:.5, kind:'drop'},
+ {t:4.0, d:.6, el:'#c1h', fx:.70}, {t:4.55, d:.3, el:'#c1a', fx:.70}, {t:5.05, d:.3, el:'#c1b', fx:.70},
+ {t:5.55, d:.3, el:'#c1c', fx:.70}, {t:7.05, d:.6, el:'#input', fx:.5},
+ {t:7.6, d:0, el:'#input', fx:.5, kind:'cut'},
+ {t:11.6, d:.6, el:'#fill', fx:1}, {t:15.7, d:.6, el:'#input', fx:.5},
+ {t:16.2, d:0, el:'#input', fx:.5, kind:'cut'},
+ {t:19.95, d:.6, el:'#c3m', fx:.45}, {t:22.95, d:.55, el:'#badge', fx:.5}, {t:23.35, d:.34, el:'#badge', fx:.5},
+ {t:24.6, d:0, el:'#input', fx:.5, kind:'cut'},
+ {t:26.9, d:.6, el:'#c4card', fx:.85}, {t:27.8, d:.5, el:'#input', fx:.5},
+ {t:29.95, d:.6, el:'#c4ok', fx:.62}, {t:30.55, d:.34, el:'#c4ok', fx:.62}, {t:31.1, d:.34, el:'#c4ok', fx:.62},
+ {t:32.4, d:0, el:'#input', fx:.5, kind:'cut'},
+ {t:34.95, d:.6, el:'#c5n', fx:.55}, {t:38.5, d:.6, el:'#c5l', fx:.62},
+];
+const EYES = [[1,3.4,'left'],[3.4,6.4,'left'],[11.6,13.4,'right'],[13.4,13.9,'down'],[13.9,14.9,'wide'],[14.9,15.2,'down'],
+ [16.2,19.3,'left'],[19.95,21.7,'left'],[22.9,23.35,'down'],[23.35,24.6,'happy'],[24.6,26.3,'left'],[26.9,27.3,'down'],
+ [27.8,29.2,'left'],[29.95,32.4,'happy'],[32.4,34.3,'left'],[34.95,36.5,'shut'],[36.5,38,'left'],[39.0,99,'shut']];
+const PROPS = [[13.9,14.9,'bang'],[23.35,24.4,'spark'],[29.95,31.7,'spark'],[39.0,99,'zzz']];
+// camera: arrive at t after a move of d seconds
+const CAM = [
+ {t:0, d:0, z:1, el:'#win', fx:.5, fy:.5},
+ {t:1.7, d:.6, z:1.7, el:'#caret', fx:.5, fy:.5}, {t:3.8, d:.7, z:1.4, el:'#c1b', fx:.40, fy:.5}, {t:7.3, d:.8, z:1, el:'#win', fx:.5, fy:.5},
+ {t:8.5, d:.5, z:1.7, el:'#caret', fx:.5, fy:.5}, {t:10.6, d:.7, z:1.35, el:'#c2bar', fx:.42, fy:.2}, {t:15.95, d:.7, z:1, el:'#win', fx:.5, fy:.5},
+ {t:16.95, d:.5, z:1.7, el:'#caret', fx:.5, fy:.5}, {t:19.3, d:.6, z:1.35, el:'#c3a', fx:.40, fy:.5},
+ {t:20.25, d:.5, z:1.9, el:'#c3m', fx:.24, fy:.5}, {t:22.05, d:.6, z:1.4, el:'#c3k', fx:.42, fy:.5}, {t:24.45, d:.4, z:1, el:'#win', fx:.5, fy:.5},
+ {t:25.25, d:.4, z:1.6, el:'#caret', fx:.5, fy:.5}, {t:26.35, d:.6, z:1.35, el:'#c4card', fx:.75, fy:.5},
+ {t:27.95, d:.45, z:1.7, el:'#caret', fx:.5, fy:.5}, {t:29.75, d:.6, z:1.35, el:'#c4ok', fx:.42, fy:0}, {t:32.25, d:.5, z:1, el:'#win', fx:.5, fy:.5},
+ {t:33.05, d:.4, z:1.7, el:'#caret', fx:.5, fy:.5}, {t:34.45, d:.6, z:1.4, el:'#c5n', fx:.40, fy:.5}, {t:38.4, d:1.0, z:1, el:'#win', fx:.5, fy:.5},
+];
+const SPOT = [20.0, 21.5];
+
+// ---------- build DOM ----------
+const chapters = $('#chapters');
+CH.forEach((c, i) => {
+  const div = document.createElement('div'); div.className = 'chapter'; div.id = 'ch' + i;
+  c.rows.forEach(r => {
+    const e = document.createElement('div'); e.className = 'row'; if (r.id) e.id = r.id; r.e = e;
+    if (r.k === 'u') e.innerHTML = `<span class=b><b>&gt; </b></span><b>${r.text}</b>`;
+    else if (r.k === 't') e.innerHTML = `<span class=g>● </span><b>Bash</b>(${r.cmd})`;
+    else if (r.k === 'o') e.innerHTML = `<span class=d>${r.first ? '  └ ' : '    '}</span><span class="${r.cls || ''}">${r.html}</span>`;
+    else if (r.k === 's') e.innerHTML = `${r.cont ? '  ' : '● '}<span class="${r.cls || ''}">${r.html}</span>`;
+    else if (r.k === 'bar') e.innerHTML = `<span class=d>  └ replaying</span><span id=track><span id=fill></span></span><span id=count class=d>  0</span>`;
+    else if (r.k === 'badge') e.innerHTML = `<span id=badge>checking…</span>`;
+    else if (r.k === 'card') { e.className = 'row card'; e.innerHTML = `<div>BUY 30 DEMO at ₹653.90 (MIS)</div><div class=d>stop ₹649.85   target ₹666.05   paper</div>`; }
+    div.appendChild(e);
+  });
+  chapters.appendChild(div);
+});
+
+// ---------- mascot sprite (original pixel bull) ----------
+const BODY = ['H............H','HH..........HH','.HBBBBBBBBBBH.','..BBBBBBBBBB..','..BBeeBBeeBB..','..BBeeBBeeBB..',
+ '..BBBBBBBBBB..','..BSSSSSSSSB..','..BSSDSSDSSB..','..BBBBBBBBBB..','..LL......LL..','..LL......LL..'];
+const COL = {B:'#9d6bff', H:'#f4efe4', S:'#f7b8d8', D:'#5a2350', L:'#5b34c4', e:'#9d6bff'};
+const mc = $('#mascot'), mx = mc.getContext('2d');
+function drawMascot(eyes, tuck, prop, t) {
+  mx.clearRect(0, 0, 22, 20);
+  const ox = 4, oy = 8;
+  BODY.forEach((row, y) => {
+    if (tuck && y === 11) return;
+    for (let x = 0; x < 14; x++) { const c = row[x]; if (c !== '.') { mx.fillStyle = COL[c]; mx.fillRect(ox + x, oy + y, 1, 1); } }
+  });
+  const W = '#ffffff', P = '#1b1030';
+  for (const ex of [4, 8]) {
+    const px = (x, y, c) => { mx.fillStyle = c; mx.fillRect(ox + ex + x, oy + 4 + y, 1, 1); };
+    if (eyes === 'happy') { px(0, 0, P); px(1, 0, P); }
+    else if (eyes === 'shut') { px(0, 1, P); px(1, 1, P); }
+    else {
+      px(0, 0, W); px(1, 0, W); px(0, 1, W); px(1, 1, W);
+      if (eyes === 'left') { px(0, 0, P); px(0, 1, P); }
+      else if (eyes === 'right') { px(1, 0, P); px(1, 1, P); }
+      else if (eyes === 'down') { px(0, 1, P); px(1, 1, P); }
+      else if (eyes === 'up') { px(0, 0, P); px(1, 0, P); }
+      else if (eyes === 'wide') { px(ex === 4 ? 1 : 0, 0, P); }
+      else { px(ex === 4 ? 1 : 0, 1, P); px(ex === 4 ? 1 : 0, 0, P); }
+    }
+  }
+  if (prop === 'bang') { mx.fillStyle = '#ffd33d'; mx.fillRect(10, 0, 2, 4); mx.fillRect(10, 5, 2, 2); }
+  if (prop === 'spark') {
+    const f = Math.floor(t * 6) % 3; mx.fillStyle = '#ffd33d';
+    [[1, 3], [19, 5], [3, 12], [20, 13]].forEach(([x, y], i) => {
+      if ((i + f) % 3 === 0) { mx.fillRect(x, y - 1, 1, 3); mx.fillRect(x - 1, y, 3, 1); } else if ((i + f) % 3 === 1) mx.fillRect(x, y, 1, 1);
+    });
+  }
+  if (prop === 'zzz') {
+    const f = Math.floor(t * 1.6) % 3; mx.fillStyle = '#c9d1d9';
+    const z = (x, y) => { mx.fillRect(x, y, 3, 1); mx.fillRect(x + 1, y + 1, 1, 1); mx.fillRect(x, y + 2, 3, 1); };
+    z(17, 5); if (f >= 1) z(19, 1 + (f === 2 ? 0 : 1));
+  }
+}
+
+// ---------- helpers ----------
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+const pick = (list, t) => { for (const [a, b, v] of list) if (t >= a && t < b) return v; return null; };
+function rnd(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function anchor(sel, fx, fy) {       // world coords; call only while #world has no transform
+  const e = $(sel); if (!e) return null; const r = e.getBoundingClientRect();
+  return {x: r.left + r.width * fx, y: r.top + r.height * (fy || 0)};
+}
+function seg(list, t) {              // -> [current, next, u] for arrive-at-t keyframes
+  let i = 0; while (i + 1 < list.length && list[i + 1].t - list[i + 1].d <= t) i++;
+  const cur = list[i]; const un = cur.d > 0 ? (t - (cur.t - cur.d)) / cur.d : 1;
+  return [list[Math.max(i - 1, 0)], cur, Math.min(Math.max(un, 0), 1)];
+}
+
+// ---------- frame ----------
+window.DURATION = DUR;
+window.render = function (t) {
+  const world = $('#world'); world.style.transform = 'none';
+  let ci = 0; CH.forEach((c, i) => { if (t >= c.t0) ci = i; });
+  const ch = CH[ci];
+  CH.forEach((c, i) => { $('#ch' + i).style.display = i === ci ? 'block' : 'none'; });
+  ch.rows.forEach(r => { if (r.e) r.e.classList.toggle('on', r.at !== undefined && t >= r.at); });
+  // typing
+  let typed = '', keys = '', typing = false;
+  ch.rows.filter(r => r.k === 'u').forEach(r => {
+    if (t >= r.ta && t < r.at) {
+      const n = r.text.length; let shown = 0;
+      for (let i = 0; i < n; i++) if (t >= r.ta + (r.tb - r.ta) * ((i + rnd(i + r.ta * 7) * .7) / n)) shown = i + 1;
+      typed = r.text.slice(0, shown); typing = true;
+      keys = t >= r.tb + 0.02 ? ['return ⏎'] : typed.slice(-5).split('').map(c => c === ' ' ? '␣' : c);
+    } else if (t >= r.at && t < r.at + 0.45) keys = ['return ⏎'];
+  });
+  $('#typed').textContent = typed;
+  $('#caret').style.opacity = (typing || Math.floor(t * 1.7) % 2 === 0) ? 1 : 0;
+  const kd = $('#keys'); kd.style.display = keys ? 'flex' : 'none';
+  if (keys) kd.innerHTML = keys.map(k => `<span>${k}</span>`).join('');
+  // chapter 2 bar, chapter 3 badge, ending dim
+  const pu = Math.min(Math.max((t - 11.5) / 1.8, 0), 1);
+  $('#fill').style.width = (400 * pu) + 'px';
+  $('#count').textContent = '  ' + Math.round(pu * 10000).toLocaleString('en-US');
+  const b = $('#badge'); const pass = t >= 23.35;
+  b.className = pass ? 'pass' : ''; b.textContent = pass ? 'PASS  16 of 16 checks' : 'checking…';
+  $('#dim').style.opacity = 0.42 * ease((t - 39.6) / 1.2);
+  $('#lapse').style.display = (t >= 11.5 && t < 13.3 && Math.floor(t * 4) % 4 !== 3) ? 'block' : 'none';
+  // overlays
+  $('#pn').textContent = '0' + (ci + 1); $('#pt').textContent = ch.name;
+  const cap = CAPS.find(c => t >= c[0] && t < c[1]); const ce = $('#cap');
+  ce.style.display = cap ? 'block' : 'none'; if (cap) { ce.textContent = cap[2]; ce.style.opacity = Math.min(1, (t - cap[0]) / .18, (cap[1] - t) / .18); }
+
+  // mascot position (measured from the live DOM)
+  const [prev, cur, mu] = seg(WP, t);
+  let pos, moving = false, landedAgo = 99, crouch = 0;
+  const here = anchor(cur.el, cur.fx);
+  if (t < WP[0].t - WP[0].d) pos = {x: here.x, y: -80};
+  else if (mu < 1 && cur.kind !== 'cut') {
+    const from = cur.kind === 'drop' ? {x: here.x, y: -60} : anchor(prev.el, prev.fx);
+    const e = ease(mu); const dy = Math.abs(here.y - from.y);
+    const h = cur.kind === 'drop' ? 0 : Math.max(44, 40 + dy * .22);
+    pos = {x: from.x + (here.x - from.x) * e, y: from.y + (here.y - from.y) * (cur.kind === 'drop' ? mu * mu : e) - h * 4 * mu * (1 - mu)};
+    moving = true;
+  } else { pos = here; landedAgo = t - cur.t; }
+  const nxt = WP[WP.indexOf(cur) + 1];
+  if (!moving && nxt && nxt.kind !== 'cut') { const start = nxt.t - nxt.d; if (start - t < .12 && start - t >= 0) crouch = 1 - (start - t) / .12; }
+  let sx = 1, sy = 1;
+  if (moving) { const st = Math.sin(Math.PI * Math.min(mu * 1.6, 1)); sy = 1 + .12 * st; sx = 1 - .08 * st; }
+  else if (landedAgo < .3 && cur.kind !== 'cut') { const k = Math.exp(-landedAgo * 14) * Math.cos(landedAgo * 30); sy = 1 - .22 * k; sx = 1 + .16 * k; }
+  else if (crouch) { sy = 1 - .16 * crouch; sx = 1 + .1 * crouch; }
+  else { sy = 1 + .025 * Math.sin(t * Math.PI * 2 / .9); }
+  let eyes = pick(EYES, t) || 'neutral';
+  const bl = (t + 0.4) % 2.9; if (bl < .12 && eyes !== 'happy' && eyes !== 'wide') eyes = 'shut';
+  drawMascot(eyes, moving, pick(PROPS, t), t);
+  mc.style.left = (Math.round((pos.x - 55) / 2.5) * 2.5) + 'px';
+  mc.style.top = (Math.round((pos.y - 100) / 2.5) * 2.5) + 'px';
+  mc.style.transform = `scale(${sx.toFixed(3)},${sy.toFixed(3)})`;
+
+  // camera
+  const [cp, cc, cu] = seg(CAM, t); const e = ease(cu);
+  const a = anchor(cp.el, cp.fx, cp.fy), bb = anchor(cc.el, cc.fx, cc.fy);
+  const z = cp.z + (cc.z - cp.z) * e, fx = a.x + (bb.x - a.x) * e, fy = a.y + (bb.y - a.y) * e;
+  const tx = Math.min(0, Math.max(1280 - 1280 * z, 640 - fx * z)), ty = Math.min(0, Math.max(720 - 720 * z, 330 - fy * z));
+  world.style.transform = `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${z.toFixed(4)})`;
+  // spotlight
+  const so = Math.min(ease((t - SPOT[0]) / .35), ease((SPOT[1] - t) / .35)); const v = $('#vig');
+  v.style.opacity = so > 0 ? so : 0;
+  if (so > 0) { const m = anchor('#c3m', .24, .2); const cx = m.x, cy = m.y;
+    v.style.background = `radial-gradient(ellipse 700px 230px at ${cx}px ${cy}px, transparent 58%, rgba(3,5,9,.66) 100%)`; }
+  // pixel wipe at chapter seams
+  const wc = $('#wipe').getContext('2d'); wc.clearRect(0, 0, 1280, 720);
+  for (const c of CH.slice(1)) { const d = t - c.t0; if (Math.abs(d) < .28) {
+      const cover = 1 - Math.abs(d) / .28; let n = 0;
+      for (let y = 0; y < 18; y++) for (let x = 0; x < 32; x++, n++) if (rnd(n + c.t0) < cover * 1.05) {
+        wc.fillStyle = rnd(n * 3.1) < .16 ? '#9d6bff' : (rnd(n * 1.7) < .5 ? '#0b0e14' : '#11151d'); wc.fillRect(x * 40, y * 40, 40, 40); } } }
+};
+document.fonts.ready.then(() => { window.render(0); window.READY = true; });
+</script></body></html>
