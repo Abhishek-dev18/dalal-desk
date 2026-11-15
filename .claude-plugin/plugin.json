@@ -1,0 +1,17 @@
+{
+  "name": "dalal-desk",
+  "version": "0.1.0",
+  "description": "Indian stock market trading desk for Claude: scan, plan, simulate, size, risk-gate, paper or live tickets, journal and tax, built for NSE and small accounts.",
+  "author": {
+    "name": "Abhishek"
+  },
+  "license": "MIT",
+  "keywords": [
+    "trading",
+    "india",
+    "nse",
+    "intraday",
+    "swing",
+    "options"
+  ]
+}

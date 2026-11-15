@@ -1,0 +1,6 @@
+.env
+config.json
+trader/
+data/
+__pycache__/
+*.pyc

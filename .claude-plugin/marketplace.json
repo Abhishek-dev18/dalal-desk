@@ -1,0 +1,13 @@
+{
+  "name": "dalal-desk",
+  "owner": {
+    "name": "Abhishek"
+  },
+  "plugins": [
+    {
+      "name": "dalal-desk",
+      "source": "./",
+      "description": "Indian stock market trading desk for Claude (NSE, intraday, swing, option buying)."
+    }
+  ]
+}
