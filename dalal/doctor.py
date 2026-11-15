@@ -17,13 +17,16 @@ def run(cfg, live=False):
         "rate_table": {"effective_from": str(r["effective_from"]), "last_reviewed": str(r["reviewed"]),
                        "days_since_review": age,
                        "status": "ok" if age <= 180 else "STALE: check STT and exchange charges"},
-        "holidays_on_file": len(refdata.HOLIDAYS),
+        "holiday_years_on_file": sorted(refdata.HOLIDAY_YEARS),
         "secrets": {k: ("set" if os.environ.get(k) else "missing") for k in
                     ("UPSTOX_ACCESS_TOKEN", "KITE_API_KEY", "KITE_ACCESS_TOKEN", "LIVE_TRADING")},
     }
     warnings = []
-    if len(refdata.HOLIDAYS) < 10:
-        warnings.append("Holiday list is incomplete; add the NSE list to refdata.HOLIDAYS for correct expiries.")
+    today = date.today()
+    missing = [y for y in (today.year, today.year + 1) if y not in refdata.HOLIDAY_YEARS
+               and (y == today.year or today.month >= 11)]
+    if missing:
+        warnings.append(f"No NSE holiday list for {missing}; add it to refdata.HOLIDAYS or expiry dates may be wrong.")
     if cfg["mode"] == "live":
         warnings.append("LIVE mode. API orders need a static IP registered with your broker (SEBI, April 2026).")
         if cfg["broker"] in ("upstox", "kite"):

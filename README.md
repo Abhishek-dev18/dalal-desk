@@ -11,7 +11,7 @@ Scan NSE stocks → plan the trade → check the odds → size it → risk-check
 [![Paper mode by default](https://img.shields.io/badge/default-paper_mode-2f8a46)](#%EF%B8%8F-safety-rails)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3d3d3a)](#-quick-start)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-3d3d3a)](#-quick-start)
-[![Tests: 31 offline](https://img.shields.io/badge/tests-31_offline-3d3d3a)](#-what-is-tested)
+[![Tests](https://github.com/Abhishek-dev18/dalal-desk/actions/workflows/tests.yml/badge.svg)](https://github.com/Abhishek-dev18/dalal-desk/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-3d3d3a)](LICENSE)
 
 <img src="docs/demo.gif" alt="Animated walkthrough: in a Claude Code window, Dalal Desk scans, plans, simulates, sizes, risk-checks, places a paper trade and reviews it, with a pixel bull acting out each step" width="100%">
@@ -171,7 +171,7 @@ dd.py journal stats
 
 ## 🧪 What is tested
 
-- ✅ **31 offline tests** (`python3 -m unittest discover -s tests -v`): charges, tick rounding, expiry
+- ✅ **32 offline tests**, run on every push by GitHub Actions (`python3 -m unittest discover -s tests -v`): charges, tick rounding, holidays, expiry
   dates, option maths, scanners, sizing, every risk-gate rule, the ticket flow, the order hook and the
   paper broker.
 - ❌ **Not yet tested:** live Yahoo and Upstox data, the news feed URLs, and the Upstox and Kite order
@@ -184,7 +184,7 @@ Indian market rules change often. They live in `dalal/refdata.py` with their eff
 Sources are in [`docs/RULES.md`](docs/RULES.md).
 
 - **Charges** (STT, exchange, stamp duty, GST): table effective 1 April 2026. Check against a contract note.
-- **Holidays:** only two dates are filled in. Add the NSE holiday list each year, or expiry dates will be wrong.
+- **Holidays:** the full 2026 NSE list is filled in. Add 2027 once NSE publishes it (`dd.py doctor` warns from November).
 - **Lot sizes and expiries:** Nifty 65, weekly expiry Tuesday; Sensex weekly Thursday; others monthly only.
 - **Tick sizes** follow NSE price bands; your broker's instrument file is the authority.
 

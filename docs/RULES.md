@@ -27,6 +27,11 @@ The values live in `dalal/refdata.py`.
 - Weekly expiries: Nifty on Tuesday, Sensex on Thursday. Other indices are monthly only, expiring
   on the last Tuesday. A holiday moves expiry to the previous trading day.
 
+## Holidays
+
+- 2026: 16 weekday holidays, from NSE circulars NSE/FAOP/71777 (12 Dec 2025) and NSE/FAOP/72262
+  (15 Jan 2026, Maharashtra municipal elections). The 2027 list had not been published in November 2026.
+
 ## Ticks
 
 NSE cash tick by price: under 250 is 0.01; 250 to 1,000 is 0.05; 1,000 to 5,000 is 0.10;

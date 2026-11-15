@@ -80,6 +80,14 @@ class TestRules(Base):
         self.assertTrue(refdata.on_tick(339.3))
         self.assertFalse(refdata.on_tick(339.33))
 
+    def test_holiday_list_2026(self):
+        self.assertEqual(len([d for d in refdata.HOLIDAYS if d.year == 2026]), 16)
+        self.assertTrue(all(d.weekday() < 5 for d in refdata.HOLIDAYS))
+        # Holi, Tue 3 Mar 2026: the Nifty weekly moves to Mon 2 Mar
+        self.assertEqual(refdata.weekly_expiry("NIFTY", date(2026, 3, 2)), date(2026, 3, 2))
+        # Dussehra, Tue 20 Oct 2026
+        self.assertEqual(refdata.weekly_expiry("NIFTY", date(2026, 10, 19)), date(2026, 10, 19))
+
     def test_expiry_shifts_for_holiday(self):
         self.assertEqual(refdata.weekly_expiry("NIFTY", date(2026, 11, 16)), date(2026, 11, 17))
         self.assertEqual(refdata.weekly_expiry("NIFTY", date(2026, 11, 18)), date(2026, 11, 23))
