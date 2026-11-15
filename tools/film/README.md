@@ -1,6 +1,6 @@
 # The README film
 
-`docs/demo.gif` and `docs/demo.mp4` are rendered from `index.html`: a 41-second walkthrough in the
+`docs/demo.gif` and `docs/demo.mp4` are rendered from `index.html`: a 41-second walkthrough in Claude's light-theme colours, in the
 "Mascot Screencast" style. The Claude Code window is redrawn in HTML, and an original pixel bull acts
 out what the tool is doing. Every number on screen is real `dd.py` output on the synthetic sample
 data in `tests/fixtures.py`; the prompts and replies are scripted.
