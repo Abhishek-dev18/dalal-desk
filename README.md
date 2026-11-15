@@ -31,10 +31,10 @@ Sub-agents: `market-analyst`, `setup-analyst`, `risk-officer`.
 
 Needs Python 3.9 or newer. There is nothing to `pip install`; it uses only the standard library.
 
-**As a Claude Code plugin** (after you push this repo to GitHub):
+**As a Claude Code plugin** :
 
 ```
-/plugin marketplace add <your-github-user>/dalal-desk
+/plugin marketplace add Abhishek-dev18/dalal-desk
 /plugin install dalal-desk@dalal-desk
 ```
 
