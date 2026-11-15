@@ -104,6 +104,21 @@ python3 /path/to/dalal-desk/dd.py doctor --live
 > It starts in **paper mode with ₹20,000**. Change `capital` in `config.json` to match yours.
 > Prefer not to use the plugin? Clone the repo and copy `skills/` into `~/.claude/skills/`.
 
+<details>
+<summary><b>🖥️ Using it from Claude Desktop (when Claude can't reach market sites)</b></summary>
+
+Claude Desktop runs commands in a sandbox that may not reach Yahoo or NSE. The runner bridges that gap:
+it runs `dd.py` with Python on your own computer and internet.
+
+1. Make a trading folder, put the `dalal-desk` folder inside it, and copy `config.example.json` to `config.json` there.
+2. Copy `dalal-desk/tools/start-runner.bat` into the trading folder and double-click it (Windows).
+   On Mac or Linux: `python3 dalal-desk/tools/runner.py --work .`
+3. Connect the trading folder to your chat. Claude drops command files into `queue/` and reads the results.
+
+The runner only runs `dd.py` subcommands, never a shell, and all of Dalal Desk's safety rules still apply.
+
+</details>
+
 ## 🛡️ Safety rails
 
 Every limit is enforced in code, not just in instructions.

@@ -342,5 +342,25 @@ class TestPackaging(unittest.TestCase):
             json.loads((ROOT / f).read_text())
 
 
+class TestRunner(unittest.TestCase):
+    def test_runner_runs_only_dd_commands(self):
+        import subprocess
+        work = Path(tempfile.mkdtemp())
+        (work / "config.json").write_text("{}")
+        q = work / "queue"
+        q.mkdir()
+        (q / "ok.cmd.json").write_text(json.dumps({"args": ["expiry", "NIFTY", "--date", "2026-11-16"]}))
+        (q / "bad.cmd.json").write_text(json.dumps({"args": ["rm", "-rf", "x"]}))
+        subprocess.run([sys.executable, str(ROOT / "tools" / "runner.py"), "--work", str(work), "--once"],
+                       check=True, capture_output=True)
+        ok = json.loads((q / "ok.out.json").read_text())
+        self.assertEqual(ok["exit_code"], 0)
+        self.assertEqual(json.loads(ok["stdout"])["weekly"], "2026-11-17")
+        bad = json.loads((q / "bad.out.json").read_text())
+        self.assertEqual(bad["exit_code"], 2)
+        self.assertIn("not allowed", bad["stderr"])
+        self.assertFalse(list(q.glob("*.cmd.json")))
+
+
 if __name__ == "__main__":
     unittest.main()
