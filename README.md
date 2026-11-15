@@ -9,10 +9,13 @@ Built for small accounts (the defaults assume Rs 20,000) and for intraday, swing
 > **This is not investment advice and it does not give you an edge.** It makes the odds, the costs
 > and the rules visible. Most retail day traders lose money. Use money you can afford to lose.
 
-![One trade from scan to review, on sample data in paper mode](docs/demo.gif)
+<p align="center">
+  <img src="docs/demo.svg" alt="Animated Claude Code session: Dalal Desk scans, plans, simulates, sizes, risk-checks, places a paper trade and reviews it" width="100%">
+</p>
 
-*The run above is real output on synthetic sample data. The simulation said skip, the demo took the
-trade on paper anyway, and it was stopped out with the loss inside the limit.*
+*Command output above is real, from synthetic sample data (`python3 tools/make_demo.py` rebuilds it).
+The simulation said skip, the demo took the trade on paper anyway, and it was stopped out with the
+loss inside the limit.*
 
 ## What it does
 
