@@ -9,6 +9,11 @@ Built for small accounts (the defaults assume Rs 20,000) and for intraday, swing
 > **This is not investment advice and it does not give you an edge.** It makes the odds, the costs
 > and the rules visible. Most retail day traders lose money. Use money you can afford to lose.
 
+![One trade from scan to review, on sample data in paper mode](docs/demo.gif)
+
+*The run above is real output on synthetic sample data. The simulation said skip, the demo took the
+trade on paper anyway, and it was stopped out with the loss inside the limit.*
+
 ## What it does
 
 | Step | Skill | Command |
@@ -31,7 +36,7 @@ Sub-agents: `market-analyst`, `setup-analyst`, `risk-officer`.
 
 Needs Python 3.9 or newer. There is nothing to `pip install`; it uses only the standard library.
 
-**As a Claude Code plugin** :
+**As a Claude Code plugin:**
 
 ```
 /plugin marketplace add Abhishek-dev18/dalal-desk
