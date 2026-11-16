@@ -434,6 +434,11 @@ class TestCard(Base):
         self.assertAlmostEqual(b["today_pnl"], t["pnl_net"], places=2)
         st = self.run_cli("journal", "stats")
         self.assertEqual(st["real_trades"], 1)
+        self.run_cli("journal", "add", "SBIN", "--qty", "5", "--entry", "800", "--stop", "790", "--target", "820",
+                     "--opened", "2026-11-13T09:40:00+05:30")
+        b = self.run_cli("budget")
+        self.assertEqual(b["open_positions"], 1)
+        self.assertEqual(b["trades_today"], 2)
 
     def test_journal_add_rejects_stop_on_wrong_side(self):
         with self.assertRaises(SystemExit):

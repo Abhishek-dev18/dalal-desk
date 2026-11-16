@@ -21,7 +21,7 @@ def budget(cfg):
     total = journal.realised(trades, paper)
     day_limit = cap * cfg["daily_loss_stop_pct"] / 100
     total_limit = cap * cfg["total_loss_budget_pct"] / 100
-    scope = [t for t in trades if bool(t.get("paper")) == paper]
+    scope = journal._scope(trades, paper)
     return {
         "mode": cfg["mode"], "capital": cap,
         "risk_per_trade": round(cap * cfg["risk_per_trade_pct"] / 100, 2),
