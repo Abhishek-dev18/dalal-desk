@@ -2,7 +2,9 @@
   "capital": 20000,
   "mode": "paper",
   "broker": "paper",
-  "data": ["yahoo"],
+  "data": [
+    "yahoo"
+  ],
   "brokerage": "zerodha",
   "universe": "liquid",
   "risk_per_trade_pct": 1.0,
@@ -13,5 +15,6 @@
   "min_reward_risk": 1.5,
   "mis_leverage": 1.0,
   "allow_option_buying": true,
-  "max_option_premium_pct": 10.0
+  "max_option_premium_pct": 10.0,
+  "option_risk_limit": "block"
 }

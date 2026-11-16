@@ -11,7 +11,7 @@ description: "Work out how many shares or lots to trade so the loss at the stop,
 2. Report `qty`, `position_value`, `max_loss`, `net_profit_at_target` and `net_reward_risk`. All are after charges.
 3. If `qty` is 0, give the `reason` and stop. Do not suggest a wider risk limit; suggest a tighter stop or a cheaper stock.
 
-Default limits (from `config.json`): 1% of capital risked per trade, no leverage (`mis_leverage` 1.0), options premium capped at 10% of capital. The user can change these in `config.json`; you do not change them.
+Default limits (from `config.json`): 1% of capital risked per trade, no leverage (`mis_leverage` 1.0), options premium capped at 10% of capital. The user can change these in `config.json`; you do not change them. If `option_risk_limit` is `warn`, an option plan is sized at one lot and every limit it breaks is listed as a risk warning; show those warnings to the user word for word.
 
 ## How to run the tool
 

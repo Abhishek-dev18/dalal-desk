@@ -35,9 +35,53 @@ def budget(cfg):
     }
 
 
+def warn_mode(plan, cfg):
+    """Options with option_risk_limit = warn: per-trade risk and the premium cap only warn."""
+    return plan["segment"] == "options" and cfg.get("option_risk_limit", "block") == "warn"
+
+
+def _size_warn(plan, cfg, b):
+    """One lot, if the cash is there; every limit it breaks becomes a warning, not a block."""
+    entry, stop, side, lot = plan["entry"], plan["stop"], plan["side"], plan.get("lot") or 1
+    buying_power = max(cfg["capital"] - b["open_value"], 0)
+    result = {"symbol": plan["symbol"], "qty": 0, "lot": lot, "risk_budget": b["risk_per_trade"],
+              "buying_power": round(buying_power, 2), "risk_mode": "warn"}
+    if entry * lot > buying_power:
+        result["reason"] = f"one lot costs Rs {entry * lot:.0f}, more than the Rs {buying_power:.0f} cash left"
+        return result
+    qty = lot
+    buy, sell = (entry, stop) if side == "BUY" else (stop, entry)
+    loss_cost = costs.charges("options", buy * qty, sell * qty, cfg["brokerage"])["total"]
+    win = costs.round_trip("options", entry, plan["target"], qty, side, cfg["brokerage"])
+    max_loss = plan["risk_per_share"] * qty + loss_cost
+    cap = cfg["capital"]
+    premium = entry * qty
+    warnings = []
+    if max_loss > b["risk_per_trade"] + 0.01:
+        warnings.append(f"Loss at the stop is Rs {max_loss:.0f} ({max_loss / cap * 100:.1f}% of capital), "
+                        f"{max_loss / b['risk_per_trade']:.1f}x your Rs {b['risk_per_trade']:.0f} per-trade limit")
+    if max_loss > b["daily_room_left"]:
+        warnings.append(f"A stop-out alone uses more than today's Rs {b['daily_room_left']:.0f} loss room "
+                        "and locks trading for the day")
+    premium_cap = cap * cfg["max_option_premium_pct"] / 100
+    if premium > premium_cap:
+        warnings.append(f"Premium Rs {premium:.0f} is above the {cfg['max_option_premium_pct']:g}% "
+                        f"cap (Rs {premium_cap:.0f})")
+    warnings.append(f"Worst case: premium goes to zero, Rs {premium:.0f} ({premium / cap * 100:.1f}% of capital)")
+    result.update(qty=qty, position_value=round(premium, 2), max_loss=round(max_loss, 2),
+                  net_profit_at_target=win["net"], charges_if_stopped=loss_cost, charges_if_target=win["charges"],
+                  net_reward_risk=round(win["net"] / max_loss, 2),
+                  pct_of_capital_at_risk=round(max_loss / cap * 100, 2),
+                  worst_case=round(premium, 2), worst_case_pct=round(premium / cap * 100, 2),
+                  warnings=warnings)
+    return result
+
+
 def size(plan, cfg):
     """Largest quantity whose loss at the stop, including charges, fits the per-trade risk."""
     b = budget(cfg)
+    if warn_mode(plan, cfg):
+        return _size_warn(plan, cfg, b)
     risk_rupees = min(b["risk_per_trade"], max(b["daily_room_left"], 0))
     seg, entry, stop, rps = plan["segment"], plan["entry"], plan["stop"], plan["risk_per_share"]
     lot = plan.get("lot") or 1
@@ -106,8 +150,9 @@ def gate(plan, sized, cfg):
           f"{b['open_positions']} of {cfg['max_open_positions']} open")
     check("quantity", sized.get("qty", 0) > 0, sized.get("reason", f"qty {sized.get('qty')}"))
     if sized.get("qty", 0) > 0:
-        check("max_loss", sized["max_loss"] <= b["risk_per_trade"] + 0.01,
-              f"Rs {sized['max_loss']} vs Rs {b['risk_per_trade']}")
+        if not warn_mode(plan, cfg):
+            check("max_loss", sized["max_loss"] <= b["risk_per_trade"] + 0.01,
+                  f"Rs {sized['max_loss']} vs Rs {b['risk_per_trade']}")
         check("net_reward_risk", sized["net_reward_risk"] >= cfg["min_reward_risk"],
               f"{sized['net_reward_risk']} after charges vs minimum {cfg['min_reward_risk']}")
         check("position_size", sized["position_value"] <= sized["buying_power"] + 0.01,
@@ -118,4 +163,8 @@ def gate(plan, sized, cfg):
     if seg != "options":
         check("tick_grid", all(on_tick(plan[k]) for k in ("entry", "stop", "target")), "entry/stop/target on tick")
     blocked = [c for c in checks if not c["ok"]]
-    return {"verdict": "BLOCK" if blocked else "PASS", "failed": [c["check"] for c in blocked], "checks": checks}
+    out = {"verdict": "BLOCK" if blocked else "PASS", "failed": [c["check"] for c in blocked], "checks": checks}
+    if warn_mode(plan, cfg):
+        out["risk_mode"] = "warn"
+        out["warnings"] = sized.get("warnings", [])
+    return out

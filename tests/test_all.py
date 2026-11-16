@@ -393,6 +393,37 @@ class TestCard(Base):
         self.assertIn("Lot size", md)
         self.assertIn("NO TRADE", md)
 
+    def test_option_warn_mode_never_blocks_on_risk(self):
+        self.write_cfg(option_risk_limit="warn")
+        self.run_cli("plan", "manual", "NIFTY25450CE", "--segment", "options", "--side", "BUY",
+                     "--entry", "40", "--stop", "28", "--target", "64", "--lot", "65")
+        s = self.run_cli("size")
+        self.assertEqual(s["qty"], 65)
+        self.assertGreater(s["max_loss"], 200)
+        self.assertTrue(any("per-trade limit" in w for w in s["warnings"]), s["warnings"])
+        self.assertTrue(any("premium cap" in w.lower() or "cap (" in w for w in s["warnings"]), s["warnings"])
+        g = self.run_cli("gate")
+        self.assertEqual(g["verdict"], "PASS", g["failed"])
+        md = self.run_cli("card")
+        self.assertIn("HIGH RISK", md)
+        self.assertIn("Risk warning", md)
+        self.assertIn("% of capital", md)
+
+    def test_option_warn_mode_keeps_hard_stops(self):
+        self.write_cfg(option_risk_limit="warn")
+        self.run_cli("kill", "on")
+        self.run_cli("plan", "manual", "NIFTY25450CE", "--segment", "options", "--side", "BUY",
+                     "--entry", "30", "--stop", "21", "--target", "48", "--lot", "65")
+        self.run_cli("size")
+        g = self.run_cli("gate")
+        self.assertEqual(g["verdict"], "BLOCK")
+        self.assertIn("kill_switch", g["failed"])
+
+    def test_warn_mode_does_not_touch_stocks(self):
+        self.write_cfg(option_risk_limit="warn", risk_per_trade_pct=0.01)
+        self.manual_plan()
+        self.assertEqual(self.run_cli("size")["qty"], 0)
+
     def test_theta_warning_near_expiry(self):
         cfg = config.load()
         r = options.buy_check("NIFTY", "CE", 25230, 25450, 26.25, 1.15, cfg)

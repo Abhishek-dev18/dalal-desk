@@ -22,6 +22,7 @@ DEFAULTS = {
     "mis_leverage": 1.0,             # 1.0 = never trade more than your cash
     "allow_option_buying": True,
     "max_option_premium_pct": 10.0,  # max premium per option trade, % of capital
+    "option_risk_limit": "block",    # block | warn: warn sizes one lot, shows the risk, never blocks on it
     "ticket_ttl_minutes": 15,
     "min_turnover_cr": 5.0,
     "risk_free_rate": 0.065,

@@ -131,7 +131,7 @@ Every limit is enforced in code, not just in instructions.
 | 🔢 | Max **3 trades a day**, **2 open positions**, no leverage unless you raise `mis_leverage` |
 | ⏰ | No new intraday entries after **15:00**, flat by **15:10** |
 | ⚖️ | Reward must be at least **1.5× risk after charges** |
-| 📉 | **Option buying only**, premium capped at 10% of capital. Option selling and delivery shorts are blocked |
+| 📉 | **Option buying only**, premium capped at 10% of capital. Option selling and delivery shorts are blocked. Set `"option_risk_limit": "warn"` to size one lot and show the risk as warnings instead of blocking (daily stop, total budget and kill switch still block) |
 | ✍️ | Orders need a ticket **you approve by typing `YES <id>`**. Tickets expire in 15 minutes and are refused if changed |
 | 🪝 | A hook **blocks any broker order tool** that has no matching approved ticket |
 | 🛑 | `dd.py kill on` stops everything. **Only you** can clear it, by deleting `trader/KILL` |

@@ -110,7 +110,11 @@ def buy_check(underlying, kind, spot, strike, premium, days, cfg):
         result["theta_cost_per_day_one_lot"] = round(g["theta_per_day"] * lot, 2)
     warnings = []
     if cost > cap:
-        warnings.append("One lot costs more than your premium cap. Do not buy.")
+        if cfg.get("option_risk_limit", "block") == "warn":
+            warnings.append(f"One lot costs Rs {cost:.0f}, above your Rs {cap:.0f} premium cap "
+                            f"({result['pct_of_capital']}% of capital). Warning only.")
+        else:
+            warnings.append("One lot costs more than your premium cap. Do not buy.")
     if days <= 1:
         warnings.append("Expiry day or the day before: premium can go to zero within hours.")
     if result["move_needed_pct"] > 1.5 and days <= 3:

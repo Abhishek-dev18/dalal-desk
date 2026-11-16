@@ -22,6 +22,8 @@ def _verdict(gate, sim):
         return "SKIP", "passes the risk gate, but the odds are negative after charges"
     if sim and sim.get("mean_net_r") is not None and sim["mean_net_r"] < 0.1:
         return "SMALL OR SKIP", "passes the risk gate; odds are close to a coin flip"
+    if gate.get("warnings") and len(gate["warnings"]) > 1:
+        return "HIGH RISK", "allowed, but above your normal risk limits; read the risk warnings and decide"
     return "TRADE OK", "passes every risk check" + ("" if sim else " (no simulation run)")
 
 
@@ -71,6 +73,8 @@ def build(plan, sized, gate, sim=None):
                                  f"({sized['pct_of_capital_at_risk']}% of capital)"))
         rows.append(("Max profit", f"{_rs(sized['net_profit_at_target'])} after charges"))
         rows.append(("Reward : risk", f"{sized['net_reward_risk']} after charges"))
+    for w in gate.get("warnings", []):
+        rows.append(("Risk warning", w))
     if sim and "target_first_pct" in sim:
         rows.append((f"Odds ({sim['runs']:,} replays)", f"target first {sim['target_first_pct']}%, stop first "
                                               f"{sim['stop_first_pct']}%, still open at exit time "
