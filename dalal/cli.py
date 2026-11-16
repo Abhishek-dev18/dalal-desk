@@ -3,7 +3,7 @@ import argparse
 import sys
 from datetime import date
 
-from . import backtest, config, costs, doctor, journal, market, options, plan, refdata, risk, scan, sim, tax, ticket
+from . import backtest, card, config, costs, doctor, journal, market, options, plan, refdata, risk, scan, sim, tax, ticket
 from .providers import get_data
 from .util import now, out, read_json, sessions, state_dir, write_json, closed_only
 
@@ -53,6 +53,7 @@ def main(argv=None):
     a = sub.add_parser("sim"); a.add_argument("--runs", type=int, default=10000)
     a.add_argument("--seed", type=int, default=7); a.add_argument("--from", dest="start")
     sub.add_parser("size"); sub.add_parser("gate"); sub.add_parser("budget")
+    a = sub.add_parser("card"); a.add_argument("--json", action="store_true")
     a = sub.add_parser("ticket"); a.add_argument("action", choices=["new", "show", "approve", "execute", "list"])
     a.add_argument("id", nargs="?"); a.add_argument("--typed", default="")
     a = sub.add_parser("paper"); a.add_argument("action", choices=["settle"])
@@ -134,6 +135,16 @@ def main(argv=None):
         return out(s)
     if c == "gate":
         return out(risk.gate(_need(_plan_file(), "plan"), _need(_size_file(), "size"), cfg))
+    if c == "card":
+        pl, sz = _need(_plan_file(), "plan"), _need(_size_file(), "size")
+        sm = read_json(state_dir() / "sim.json", None)
+        if sm and sm.get("symbol") != pl["symbol"]:
+            sm = None
+        cd = card.build(pl, sz, risk.gate(pl, sz, cfg), sm)
+        if args.json:
+            return out(cd)
+        print(card.markdown(cd, cfg["mode"]))
+        return None
     if c == "ticket":
         return out(ticket.create(_need(_plan_file(), "plan"), _need(_size_file(), "size"), cfg))
     if c == "news":
@@ -159,6 +170,7 @@ def main(argv=None):
                 raise SystemExit("manual plan needs --entry --stop --target")
             pl = plan.manual(sym, args.side, args.segment, args.entry, args.stop, args.target, cfg, args.lot)
         write_json(_plan_file(), pl)
+        (state_dir() / "sim.json").unlink(missing_ok=True)
         return out(pl)
     if c == "entry":
         pl = _need(_plan_file(), "plan")
@@ -167,7 +179,9 @@ def main(argv=None):
         pl = _need(_plan_file(), "plan")
         sized = read_json(_size_file(), {})
         qty = sized.get("qty") if sized.get("symbol") == pl["symbol"] else None
-        return out(sim.run(pl, data.candles(pl["symbol"], "5m", 59), cfg, args.runs, args.seed, args.start, qty))
+        res = sim.run(pl, data.candles(pl["symbol"], "5m", 59), cfg, args.runs, args.seed, args.start, qty)
+        write_json(state_dir() / "sim.json", res)
+        return out(res)
     if c == "paper":
         return out(journal.settle_paper(cfg, data))
     if c == "backtest":

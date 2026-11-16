@@ -20,6 +20,10 @@ Built for small accounts. It only supports buying options; selling and futures a
 - The whole premium can be lost, and on expiry day that can happen within hours.
 - Compare `theta_cost_per_day_one_lot` with the planned profit: if a day of waiting costs more than a third of the target profit, the trade needs to work fast.
 
+## Present it as the trade card
+
+After planning, sizing and the gate, run `dd.py card`. For options it adds the contract, expiry and lot size. Show the card as it prints, including a NO TRADE verdict.
+
 ## How to run the tool
 
 Every command is `python3 <root>/dd.py <command>`, where `<root>` is the Dalal Desk folder

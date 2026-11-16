@@ -18,6 +18,7 @@ The other skills in order. Stop at the first step that says no.
 4. `intraday-scanner` after 09:30.
 5. Pick at most one or two candidates. For each: `trade-plan`, then `time-machine`. Drop it if the simulation is negative after charges.
 6. `position-sizer`, then `risk-gate`. A block ends it.
+   Show the result with `dd.py card`.
 7. `dd.py entry` until it says `triggered` (or `expired`).
 8. `order-ticket`, only when the user asks to take the trade.
 

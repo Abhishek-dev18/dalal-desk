@@ -22,6 +22,10 @@ Always continue to `position-sizer` and `risk-gate`. For intraday plans run `tim
 
 Explain the plan in plain words: where it enters and why, where it is wrong (the stop), and what it makes at target against what it loses at the stop.
 
+## Present it as the trade card
+
+After `position-sizer` and `risk-gate` (and `time-machine` for intraday), run `dd.py card` and show its table to the user as it prints. Every trade idea is shown this way: share, trade type, when to buy, buy at, quantity, stop-loss, target, exit by, max loss, max profit, reward to risk, odds, risk check and verdict. When nothing is worth trading, say "No trade" in one line and why.
+
 ## How to run the tool
 
 Every command is `python3 <root>/dd.py <command>`, where `<root>` is the Dalal Desk folder

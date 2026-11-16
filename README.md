@@ -34,6 +34,7 @@ Install it, then ask in plain words. Claude picks the right skill and runs it.
 | *"How does the market look today?"* | Breadth score, FII/DII flows, headlines → **Risk-On / Cautious / Risk-Off** |
 | *"Find me an intraday setup"* | Ranks stocks by range breaks, VWAP, volume and gaps |
 | *"Plan SBIN and tell me the odds"* | Exact entry, stop and target, then **10,000 replays** of the rest of the day |
+| *"Give me the trade card"* | One fixed table: share, when to buy, buy at, stop-loss, target, exit by, max loss and profit, odds, verdict |
 | *"How many shares can I buy?"* | Size so the loss at the stop, **charges included**, stays under 1% of capital |
 | *"Place it"* | A ticket you approve by typing `YES <id>`. Paper fill by default |
 | *"How did today go?"* | Settles trades, shows net P&L, charges paid and loss budget left |
@@ -174,6 +175,7 @@ dd.py plan orb SBIN --side BUY --r 2     # entry, stop, target on the tick grid
 dd.py sim                                # 10,000 replays of the rest of the day, net of charges
 dd.py size                               # shares so that loss at stop + charges <= 1% of capital
 dd.py gate                               # PASS or BLOCK
+dd.py card                               # the whole trade as one table
 dd.py entry                              # waiting / triggered / expired (closed 5m bars)
 dd.py ticket new                         # proposes the order and shows the approval phrase
 dd.py ticket approve <id> --typed "YES <id>"

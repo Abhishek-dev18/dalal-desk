@@ -3,6 +3,9 @@ Swing: trend template, tightness, volume dry-up, pivot proximity, relative stren
 from . import ta
 from .util import closed_only, hhmm, sessions
 
+INDICES = {"NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "INDIAVIX"}
+LATE_ORB = "11:00"
+
 OR_END = {15: "09:30", 30: "09:45"}
 
 
@@ -24,7 +27,8 @@ def intraday_row(symbol, bars5, cfg, or_minutes=15):
     prev_close = prev[-1]["c"]
     last = today[-1]
     orng = opening_range(today, or_minutes)
-    vw = ta.vwap(today)
+    is_index = symbol.upper() in INDICES
+    vw = None if is_index else ta.vwap(today)
     n = len(today)
     past = [sum(b["v"] for b in d[:n]) for _, d in days[:-1][-20:] if len(d) >= n]
     cum = sum(b["v"] for b in today)
@@ -44,13 +48,13 @@ def intraday_row(symbol, bars5, cfg, or_minutes=15):
         row.update(or_high=round(hi, 2), or_low=round(lo, 2), or_width_pct=round(ta.pct(hi, lo), 2))
         if last["c"] > hi:
             status = "above_range"
-            side = "BUY" if vw and last["c"] > vw else None
+            side = "BUY" if is_index or (vw and last["c"] > vw) else None
         elif last["c"] < lo:
             status = "below_range"
-            side = "SELL" if vw and last["c"] < vw else None
+            side = "SELL" if is_index or (vw and last["c"] < vw) else None
         else:
             status = "inside_range"
-    liquid = turnover_cr >= cfg["min_turnover_cr"]
+    liquid = is_index or turnover_cr >= cfg["min_turnover_cr"]
     score = 0.0
     score += 30 * min((rvol or 0) / 2, 1)
     score += 25 * (status in ("above_range", "below_range"))
@@ -58,6 +62,13 @@ def intraday_row(symbol, bars5, cfg, or_minutes=15):
     score += 15 * min(abs(row["gap_pct"]) / 2, 1)
     score += 10 * liquid
     row.update(or_status=status, side=side, liquid=liquid, score=round(score, 1))
+    if is_index:
+        row["index"] = True
+        row["note"] = "Index: no volume or VWAP; trade it through options."
+    if orng and row["as_of"] >= LATE_ORB and status in ("above_range", "below_range"):
+        row["late"] = True
+        row["late_note"] = (f"after {LATE_ORB}: an opening-range break this late has had most of its move; "
+                            "check the entry has not run away before planning it")
     return row
 
 

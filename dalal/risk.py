@@ -60,8 +60,13 @@ def size(plan, cfg):
             why = f"one lot costs Rs {entry * lot:.0f}, above the Rs {buying_power:.0f} premium cap"
         elif rps * lot > risk_rupees:
             why = f"one {'lot' if lot > 1 else 'share'} risks Rs {rps * lot:.0f}, above the Rs {risk_rupees:.0f} risk budget"
-        else:
+        elif risk_rupees <= 0 or buying_power <= 0:
             why = "no buying power or loss budget left"
+        else:
+            buy, sell = (entry, stop) if plan["side"] == "BUY" else (stop, entry)
+            one = rps * lot + costs.charges(seg, buy * lot, sell * lot, cfg["brokerage"])["total"]
+            why = (f"one {'lot' if lot > 1 else 'share'} loses Rs {one:.0f} at the stop including charges, "
+                   f"above the Rs {risk_rupees:.0f} risk budget")
         result["reason"] = why
         return result
     buy, sell = (entry, stop) if plan["side"] == "BUY" else (stop, entry)

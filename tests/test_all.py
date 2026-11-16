@@ -362,5 +362,56 @@ class TestRunner(unittest.TestCase):
         self.assertFalse(list(q.glob("*.cmd.json")))
 
 
+class TestCard(Base):
+    def test_card_has_every_field(self):
+        self.run_cli("plan", "orb", "TEST")
+        self.run_cli("size")
+        self.run_cli("sim", "--runs", "500")
+        md = self.run_cli("card")
+        for label in ("Share", "Trade type", "When to buy", "Buy at", "Quantity", "Stop-loss", "Target",
+                      "Exit by", "Risk check", "Odds (500 replays)", "Verdict:"):
+            self.assertIn(label, md)
+        cd = self.run_cli("card", "--json")
+        self.assertIn(cd["verdict"], ("NO TRADE", "SKIP", "SMALL OR SKIP", "TRADE OK"))
+
+    def test_new_plan_drops_old_simulation(self):
+        self.run_cli("plan", "orb", "TEST")
+        self.run_cli("size")
+        self.run_cli("sim", "--runs", "200")
+        self.manual_plan()
+        self.run_cli("size")
+        self.assertNotIn("replays)", self.run_cli("card"))
+
+    def test_option_card_and_honest_block_reason(self):
+        self.run_cli("plan", "manual", "NIFTY25450CE", "--segment", "options", "--side", "BUY",
+                     "--entry", "26.25", "--stop", "23.75", "--target", "31.5", "--lot", "65")
+        s = self.run_cli("size")
+        self.assertEqual(s["qty"], 0)
+        self.assertIn("including charges", s["reason"])
+        md = self.run_cli("card")
+        self.assertIn("NIFTY 25450 CE", md)
+        self.assertIn("Lot size", md)
+        self.assertIn("NO TRADE", md)
+
+    def test_theta_warning_near_expiry(self):
+        cfg = config.load()
+        r = options.buy_check("NIFTY", "CE", 25230, 25450, 26.25, 1.15, cfg)
+        self.assertTrue(any("Time decay" in w for w in r["warnings"]), r["warnings"])
+
+    def test_index_and_late_flags(self):
+        from dalal import scan
+        cfg = config.load()
+        data = get_data(cfg)
+        row = scan.intraday_row("NIFTY", data.candles("NIFTY", "5m", 30), cfg)
+        self.assertTrue(row["index"])
+        self.assertTrue(row["liquid"])
+        self.assertIsNone(row["vwap"])
+        os.environ["DALAL_NOW"] = "2026-11-13T12:30:00"
+        late = [scan.intraday_row(s, data.candles(s, "5m", 30), cfg) for s in ("TEST", "AAA", "BBB")]
+        for r in late:
+            if r["or_status"] in ("above_range", "below_range"):
+                self.assertTrue(r.get("late"))
+
+
 if __name__ == "__main__":
     unittest.main()

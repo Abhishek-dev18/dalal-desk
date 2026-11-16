@@ -115,5 +115,9 @@ def buy_check(underlying, kind, spot, strike, premium, days, cfg):
         warnings.append("Expiry day or the day before: premium can go to zero within hours.")
     if result["move_needed_pct"] > 1.5 and days <= 3:
         warnings.append("Needs a large move in very few days.")
+    decay = abs(result.get("theta_cost_per_day_one_lot", 0))
+    if decay and decay >= 0.5 * cost:
+        warnings.append(f"Time decay: about Rs {decay:.0f} a day for one lot, {decay / cost * 100:.0f}% of what "
+                        "you pay. If the index does not move fast, most of the premium is gone in a day.")
     result["warnings"] = warnings
     return result

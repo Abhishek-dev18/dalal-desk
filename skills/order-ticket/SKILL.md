@@ -26,6 +26,10 @@ The only skill that places orders. The flow is propose, approve, place.
 - If a broker MCP order tool is available, do not call it directly. The plugin's hook blocks order tools without an approved ticket.
 - In live mode, remind the user that the target order is not placed automatically.
 
+## Card first
+
+Before `dd.py ticket new`, show the user the output of `dd.py card` so they see the whole trade, then the ticket's plain sentence and approval phrase.
+
 ## How to run the tool
 
 Every command is `python3 <root>/dd.py <command>`, where `<root>` is the Dalal Desk folder
