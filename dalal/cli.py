@@ -181,7 +181,11 @@ def main(argv=None):
             return out(watch.loop(cfg, data, args.every, args.minutes, pr, not args.no_trail))
         return out(watch.check(cfg, data, pr, not args.no_trail))
     if c == "quote":
-        return out({"symbol": args.symbol.upper(), "last": data.quote(args.symbol), "sources": cfg["data"]})
+        q = data.quote(args.symbol)
+        res = {"symbol": args.symbol.upper(), "last": q, "source": data.last_source}
+        if data.last_errors:
+            res["fell_back_because"] = data.last_errors
+        return out(res)
     if c == "scan":
         syms = args.symbols.upper().split(",") if args.symbols else config.universe(cfg, args.universe)
         return out(scan.run(args.kind, syms, data, cfg, args.top))

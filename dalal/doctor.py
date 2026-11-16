@@ -44,5 +44,14 @@ def run(cfg, live=False):
             except Exception as e:  # noqa: BLE001
                 probes[sym] = {"error": str(e)}
         checks["data_probe"] = probes
+        from .providers import _make_data
+        per = {}
+        for name in cfg["data"]:
+            try:
+                d = _make_data(name, cfg)
+                per[name] = {"NIFTY": d.quote("NIFTY"), "SBIN": d.quote("SBIN"), "ok": True}
+            except Exception as e:  # noqa: BLE001
+                per[name] = {"ok": False, "error": str(e)[:300]}
+        checks["each_provider"] = per
     checks["warnings"] = warnings
     return checks

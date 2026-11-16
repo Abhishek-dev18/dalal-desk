@@ -10,6 +10,7 @@ API orders also need your static IP registered with Upstox (SEBI rule, April 202
 import gzip
 import json
 import os
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import timedelta
@@ -41,8 +42,17 @@ class Upstox:
             data = json.dumps(body).encode()
             headers["Content-Type"] = "application/json"
         req = urllib.request.Request(url, data=data, headers=headers)
-        with urllib.request.urlopen(req, timeout=20) as r:
-            return json.load(r)
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                return json.load(r)
+        except urllib.error.HTTPError as e:
+            detail = ""
+            try:
+                errs = json.load(e).get("errors") or []
+                detail = "; ".join(f"{x.get('errorCode')}: {x.get('message')}" for x in errs)[:300]
+            except Exception:  # noqa: BLE001
+                pass
+            raise RuntimeError(f"Upstox HTTP {e.code} {detail}".strip()) from None
 
     def instrument_key(self, symbol):
         if symbol in INDEX_KEYS:

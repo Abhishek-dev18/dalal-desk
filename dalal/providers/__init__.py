@@ -29,6 +29,8 @@ class Chain:
         self.names = list(cfg["data"])
         self.cfg = cfg
         self._made = {}
+        self.last_source = None
+        self.last_errors = []
 
     def _get(self, name):
         if name not in self._made:
@@ -41,6 +43,7 @@ class Chain:
             try:
                 result = getattr(self._get(name), method)(*args)
                 if result:
+                    self.last_source, self.last_errors = name, errors
                     return result
                 errors.append(f"{name}: empty")
             except Exception as e:  # noqa: BLE001 - report and fall through
