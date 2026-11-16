@@ -61,7 +61,7 @@ flowchart LR
 ```
 
 <details>
-<summary><b>All 16 skills and their commands</b></summary>
+<summary><b>All 17 skills and their commands</b></summary>
 
 | Step | Skill | Command |
 |---|---|---|
@@ -72,8 +72,9 @@ flowchart LR
 | How many shares? | `position-sizer`, `trading-costs` | `size`, `costs` |
 | Is it allowed? | `risk-gate` | `gate`, `budget`, `kill on` |
 | Place it | `order-ticket` | `ticket new`, `approve`, `execute` |
-| Track it | `trade-journal`, `tax-report` | `paper settle`, `journal`, `tax` |
-| Options | `option-chain`, `option-buyer` | `options chain`, `buycheck`, `greeks`, `iv`, `expiry` |
+| When to get out | `exit-watcher` | `watch` (stop, target, trailing stop, exit time, VWAP) |
+| Track it | `trade-journal`, `tax-report` | `paper settle`, `journal add`, `journal stats`, `tax` |
+| Options | `option-chain`, `option-buyer` | `options pick`, `options chain`, `buycheck`, `greeks`, `iv`, `expiry` |
 | Setup and the whole day | `data-doctor`, `daily-routine` | `doctor` |
 
 Sub-agents: `market-analyst`, `setup-analyst`, and `risk-officer` (holds a veto).
@@ -180,6 +181,9 @@ dd.py entry                              # waiting / triggered / expired (closed
 dd.py ticket new                         # proposes the order and shows the approval phrase
 dd.py ticket approve <id> --typed "YES <id>"
 dd.py ticket execute <id>                # paper fill, logged to the journal
+dd.py watch                              # open trades: EXIT NOW / BOOK PROFIT / MOVE STOP / WEAK / HOLD
+dd.py journal add BHARTIARTL --qty 9 --entry 2159.1 --stop 2139.3 --target 2188.8   # a trade placed by hand
+dd.py options pick --file chain.csv --spot 25230 --kind CE   # rank strikes you can afford
 dd.py paper settle                       # after the close: stop, target or flat-by
 dd.py journal stats
 ```
@@ -214,7 +218,7 @@ Sources are in [`docs/RULES.md`](docs/RULES.md).
 dd.py                 entry point for every command
 dalal/                the library (standard library only)
   providers/          yahoo, csv, upstox, kite, paper, manual
-skills/               16 skills (one SKILL.md each)
+skills/               17 skills (one SKILL.md each)
 agents/ commands/     sub-agents and slash commands
 hooks/                order guard (blocks unapproved broker orders)
 universe/             watchlists to scan

@@ -50,8 +50,40 @@ def close_trade(key, price, reason="manual", when=None, profile="zerodha"):
     return t
 
 
+def add_trade(symbol, side, qty, segment, entry, stop, target, cfg, setup="manual", real=True, opened=None,
+              exit_price=None, underlying=None, underlying_stop=None, underlying_target=None, lot=None):
+    """Log a trade placed outside the ticket flow (e.g. by hand in the broker app)."""
+    import hashlib
+    if qty <= 0 or entry <= 0:
+        raise SystemExit("qty and entry must be positive")
+    if (side == "BUY" and not stop < entry) or (side == "SELL" and not stop > entry):
+        raise SystemExit("the stop must be on the losing side of the entry")
+    when = opened or now().isoformat()
+    tid = "m" + hashlib.sha256(f"{symbol}{side}{qty}{entry}{when}".encode()).hexdigest()[:15]
+    t = {"id": tid, "symbol": symbol.upper(), "side": side, "qty": qty, "segment": segment,
+         "product": "MIS" if segment == "intraday" else ("NRML" if segment == "options" else "CNC"),
+         "setup": setup, "entry": entry, "stop": stop, "target": target,
+         "risk_per_share": round(abs(entry - stop), 4),
+         "flat_by": cfg["flat_by"] if segment == "intraday" else None,
+         "opened": when, "status": "open", "paper": not real, "manual": True}
+    if lot:
+        t["lot"] = lot
+    if underlying:
+        t["underlying"] = underlying.upper()
+        t["underlying_stop"] = underlying_stop
+        t["underlying_target"] = underlying_target
+    trades = load()
+    trades.append(t)
+    save(trades)
+    if exit_price is not None:
+        return close_trade(tid, exit_price, "manual", profile=cfg["brokerage"])
+    return t
+
+
 def _scope(trades, paper):
-    return [t for t in trades if bool(t.get("paper")) == paper]
+    """Paper mode counts paper trades and real ones; live mode counts real ones only.
+    Real money lost always counts against the loss limits."""
+    return [t for t in trades if bool(t.get("paper")) == paper or not t.get("paper")]
 
 
 def realised(trades, paper, since=None):
@@ -81,6 +113,12 @@ def stats(paper):
         "avg_r": round(sum(t["r_multiple"] for t in closed) / len(closed), 2),
         "best": max(t["pnl_net"] for t in closed), "worst": min(t["pnl_net"] for t in closed),
         "by_setup": by_setup,
+        "real_trades": sum(1 for t in closed if not t.get("paper")),
+        "paper_trades": sum(1 for t in closed if t.get("paper")),
+        "avg_win": round(sum(t["pnl_net"] for t in wins) / len(wins), 2) if wins else 0,
+        "avg_loss": round(sum(t["pnl_net"] for t in closed if t["pnl_net"] <= 0)
+                          / max(1, len(closed) - len(wins)), 2),
+        "note": "Under 20 trades this says very little; keep logging." if len(closed) < 20 else "",
     }
 
 

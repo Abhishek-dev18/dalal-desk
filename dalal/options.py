@@ -125,3 +125,98 @@ def buy_check(underlying, kind, spot, strike, premium, days, cfg):
                         "you pay. If the index does not move fast, most of the premium is gone in a day.")
     result["warnings"] = warnings
     return result
+
+
+def days_to_expiry(expiry, at):
+    """Fractional calendar days from `at` (aware datetime) to 15:30 IST on the expiry date."""
+    from datetime import datetime, time
+    end = datetime.combine(expiry, time(15, 30), tzinfo=at.tzinfo)
+    return max((end - at).total_seconds() / 86400, 0.01)
+
+
+def pick(rows, spot, kind, days, underlying, cfg, top=5):
+    """Rank strikes for a small-account option buyer.
+
+    Wants: delta near 0.45 (moves with the index without being pricey), small time
+    decay per rupee paid, a small move to breakeven, real open interest, a tight
+    spread when bid/ask are given, and a lot the account can pay for."""
+    lot = LOTS.get(underlying.upper())
+    if not lot:
+        raise SystemExit(f"no lot size on file for {underlying}; add it to refdata.LOTS")
+    call = kind.upper() in ("CE", "C", "CALL")
+    side = "ce" if call else "pe"
+    warn = cfg.get("option_risk_limit", "block") == "warn"
+    cap = cfg["capital"] * cfg["max_option_premium_pct"] / 100
+    limit = cfg["capital"] if warn else cap
+    r = cfg["risk_free_rate"]
+    max_oi = max((x.get(f"{side}_oi", 0) for x in rows), default=0) or 1
+    ranked, skipped = [], []
+    for x in rows:
+        ltp = x.get(f"{side}_ltp", 0)
+        k = x["strike"]
+        if not ltp or ltp <= 0.5:
+            continue
+        cost = ltp * lot
+        if cost > limit:
+            skipped.append({"strike": k, "why": f"one lot Rs {cost:.0f} > Rs {limit:.0f}"})
+            continue
+        iv = implied_vol(kind, spot, k, days, ltp, r)
+        if not iv:
+            continue
+        g = greeks(kind, spot, k, days, iv, r)
+        delta = abs(g["delta"])
+        theta_lot = abs(g["theta_per_day"]) * lot
+        theta_pct = theta_lot / cost * 100
+        be = k + ltp if call else k - ltp
+        move = abs(be / spot - 1) * 100
+        oi = x.get(f"{side}_oi", 0)
+        spread_pct = None
+        bid, ask = x.get(f"{side}_bid"), x.get(f"{side}_ask")
+        if bid and ask and ask > bid:
+            spread_pct = (ask - bid) / ((ask + bid) / 2) * 100
+        score = 100.0
+        score -= abs(delta - 0.45) * 120
+        score -= min(theta_pct, 100) * 0.4
+        score -= move * 8
+        score -= (1 - oi / max_oi) * 15
+        if spread_pct is not None:
+            score -= min(spread_pct, 20) * 2
+        if delta < 0.2:
+            score -= 25
+        notes = []
+        if delta < 0.25:
+            notes.append("far out of the money: cheap, but rarely pays")
+        if theta_pct >= 30:
+            notes.append(f"loses about {theta_pct:.0f}% of its value a day to time decay")
+        if cost > cap:
+            notes.append(f"above your {cfg['max_option_premium_pct']:g}% premium cap (warning only)")
+        if spread_pct is not None and spread_pct > 3:
+            notes.append(f"wide spread {spread_pct:.1f}%")
+        ranked.append({"strike": k, "contract": f"{underlying.upper()}{k:g}{kind.upper()}", "premium": ltp,
+                       "cost_one_lot": round(cost, 2), "pct_of_capital": round(cost / cfg["capital"] * 100, 1),
+                       "delta": round(delta, 2), "implied_vol": iv, "theta_per_day_one_lot": round(theta_lot, 2),
+                       "theta_pct_per_day": round(theta_pct, 1), "breakeven": round(be, 2),
+                       "move_needed_pct": round(move, 2), "oi": oi,
+                       "spread_pct": round(spread_pct, 2) if spread_pct is not None else None,
+                       "score": round(score, 1), "notes": notes})
+    ranked.sort(key=lambda z: -z["score"])
+    res = {"underlying": underlying.upper(), "kind": kind.upper(), "spot": spot, "lot": lot,
+           "days_to_expiry": round(days, 2), "budget_per_lot": round(limit, 2),
+           "risk_mode": "warn" if warn else "block", "picks": ranked[:top],
+           "skipped_too_expensive": len(skipped)}
+    if days <= 1:
+        res["warning"] = "Expiry is a day or less away: premiums can go to zero within hours. Prefer the next expiry."
+    if ranked and ranked[0]["score"] < 40:
+        res["verdict"] = ("NOTHING GOOD FITS: every strike you can afford is far out of the money or decays fast. "
+                          "Skip, use a later expiry, or allow a bigger premium.")
+    elif ranked:
+        res["verdict"] = "OK"
+    if ranked:
+        b = ranked[0]
+        res["best"] = b["contract"]
+        res["next"] = (f"plan manual {b['contract']} --segment options --side BUY --entry {b['premium']} "
+                       f"--stop <premium stop> --target <premium target> --lot {lot}")
+    else:
+        res["best"] = None
+        res["why_none"] = "no strike with a usable price fits the budget"
+    return res

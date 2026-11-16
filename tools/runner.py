@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DD = ROOT / "dd.py"
 ALLOWED = {"card", "doctor", "costs", "expiry", "quote", "scan", "breadth", "news", "flows", "plan", "entry", "sim",
-           "size", "gate", "budget", "ticket", "paper", "journal", "kill", "options", "backtest", "tax"}
+           "size", "gate", "budget", "ticket", "paper", "journal", "kill", "options", "backtest", "tax", "watch"}
 MAX_SECONDS = 600
 
 

@@ -424,6 +424,67 @@ class TestCard(Base):
         self.manual_plan()
         self.assertEqual(self.run_cli("size")["qty"], 0)
 
+    def test_journal_add_real_trade_counts_in_paper_mode(self):
+        t = self.run_cli("journal", "add", "BHARTIARTL", "--qty", "9", "--entry", "2159.1", "--stop", "2139.3",
+                         "--target", "2188.8", "--exit", "2144")
+        self.assertEqual(t["status"], "closed")
+        self.assertFalse(t["paper"])
+        self.assertLess(t["pnl_net"], -130)
+        b = self.run_cli("budget")
+        self.assertAlmostEqual(b["today_pnl"], t["pnl_net"], places=2)
+        st = self.run_cli("journal", "stats")
+        self.assertEqual(st["real_trades"], 1)
+
+    def test_journal_add_rejects_stop_on_wrong_side(self):
+        with self.assertRaises(SystemExit):
+            self.run_cli("journal", "add", "TEST", "--qty", "1", "--entry", "100", "--stop", "101", "--target", "105")
+
+    def test_watch_stop_trail_and_exit_time(self):
+        self.run_cli("journal", "add", "TEST", "--qty", "10", "--entry", "100", "--stop", "98", "--target", "106")
+        w = self.run_cli("watch", "--price", "TEST=97.9")
+        self.assertEqual(w["trades"][0]["action"], "EXIT NOW")
+        w = self.run_cli("watch", "--price", "TEST=102.2")
+        self.assertEqual(w["trades"][0]["action"], "MOVE STOP")
+        self.assertEqual(w["trades"][0]["stop"], 100.0)
+        w = self.run_cli("watch", "--price", "TEST=101")
+        self.assertEqual(w["trades"][0]["stop"], 100.0)
+        self.assertNotEqual(w["trades"][0]["action"], "MOVE STOP")
+        w = self.run_cli("watch", "--price", "TEST=99.9")
+        self.assertEqual(w["trades"][0]["action"], "EXIT NOW")
+        os.environ["DALAL_NOW"] = "2026-11-13T15:12:00"
+        w = self.run_cli("watch", "--price", "TEST=101")
+        self.assertEqual(w["trades"][0]["action"], "EXIT NOW")
+        self.assertIn("exit time", w["trades"][0]["why"])
+
+    def test_watch_option_by_index_level(self):
+        self.run_cli("journal", "add", "NIFTY25450CE", "--segment", "options", "--qty", "65", "--entry", "29.05",
+                     "--stop", "20", "--target", "40", "--underlying", "NIFTY", "--underlying-stop", "25300")
+        w = self.run_cli("watch", "--price", "NIFTY=25290")
+        self.assertEqual(w["trades"][0]["action"], "EXIT NOW")
+        w = self.run_cli("watch", "--price", "NIFTY25450CE=41")
+        self.assertEqual(w["trades"][0]["action"], "BOOK PROFIT")
+
+    def test_strike_picker(self):
+        from dalal import options as op
+        cfg = config.load()
+        spot, days = 25230, 4.2
+        rows = []
+        for k in range(24900, 25701, 50):
+            ce = op.price("CE", spot, k, days, 0.12)
+            rows.append({"strike": k, "ce_ltp": round(ce, 2), "ce_oi": 1e6 if k % 100 == 0 else 4e5,
+                         "pe_ltp": round(op.price("PE", spot, k, days, 0.12), 2), "pe_oi": 5e5})
+        r = op.pick(rows, spot, "CE", days, "NIFTY", cfg)
+        self.assertTrue(r["picks"])
+        self.assertTrue(all(p["cost_one_lot"] <= 2000 for p in r["picks"]))
+        self.assertGreater(r["skipped_too_expensive"], 0)
+        self.assertIn("NOTHING GOOD FITS", r["verdict"])
+        self.write_cfg(option_risk_limit="warn")
+        r = op.pick(rows, spot, "CE", days, "NIFTY", config.load())
+        best = r["picks"][0]
+        self.assertTrue(0.3 <= best["delta"] <= 0.6, best)
+        self.assertEqual(r["verdict"], "OK")
+        self.assertEqual([p["score"] for p in r["picks"]], sorted((p["score"] for p in r["picks"]), reverse=True))
+
     def test_theta_warning_near_expiry(self):
         cfg = config.load()
         r = options.buy_check("NIFTY", "CE", 25230, 25450, 26.25, 1.15, cfg)

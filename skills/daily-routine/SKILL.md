@@ -24,6 +24,7 @@ The other skills in order. Stop at the first step that says no.
 
 ## End of day (after 15:30)
 
+8b. While a trade is open, run `exit-watcher` (`dd.py watch`) every few minutes and pass on any action that is not HOLD.
 9. `dd.py paper settle` (paper) or `dd.py journal close` for each real exit.
 10. `trade-journal` stats and `dd.py budget`.
 11. Three lines: what was traded and the net result, whether every rule was followed, and one thing to do differently tomorrow.

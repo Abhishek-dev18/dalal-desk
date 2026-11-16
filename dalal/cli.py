@@ -3,7 +3,7 @@ import argparse
 import sys
 from datetime import date
 
-from . import backtest, card, config, costs, doctor, journal, market, options, plan, refdata, risk, scan, sim, tax, ticket
+from . import backtest, card, watch, config, costs, doctor, journal, market, options, plan, refdata, risk, scan, sim, tax, ticket
 from .providers import get_data
 from .util import now, out, read_json, sessions, state_dir, write_json, closed_only
 
@@ -57,11 +57,25 @@ def main(argv=None):
     a = sub.add_parser("ticket"); a.add_argument("action", choices=["new", "show", "approve", "execute", "list"])
     a.add_argument("id", nargs="?"); a.add_argument("--typed", default="")
     a = sub.add_parser("paper"); a.add_argument("action", choices=["settle"])
-    a = sub.add_parser("journal"); a.add_argument("action", choices=["list", "close", "stats", "export"])
-    a.add_argument("id", nargs="?"); a.add_argument("--price", type=float); a.add_argument("--reason", default="manual")
+    a = sub.add_parser("journal"); a.add_argument("action", choices=["list", "add", "close", "stats", "export"])
+    a.add_argument("id", nargs="?", help="trade id or symbol; for add, the symbol")
+    a.add_argument("--price", type=float); a.add_argument("--reason", default="manual")
+    a.add_argument("--side", default="BUY", choices=["BUY", "SELL"]); a.add_argument("--qty", type=int)
+    a.add_argument("--segment", default="intraday", choices=list(config.SEGMENTS))
+    a.add_argument("--entry", type=float); a.add_argument("--stop", type=float); a.add_argument("--target", type=float)
+    a.add_argument("--exit", type=float, help="add an already closed trade")
+    a.add_argument("--paper", action="store_true", help="a paper trade; default is real money")
+    a.add_argument("--setup", default="manual"); a.add_argument("--opened", help="ISO time it was opened")
+    a.add_argument("--lot", type=int); a.add_argument("--underlying")
+    a.add_argument("--underlying-stop", type=float); a.add_argument("--underlying-target", type=float)
+    a = sub.add_parser("watch", help="check open trades once: stop, target, trailing stop, exit time, VWAP")
+    a.add_argument("--price", action="append", help="SYMBOL=VALUE, e.g. an option premium; repeatable")
+    a.add_argument("--no-trail", action="store_true"); a.add_argument("--loop", action="store_true")
+    a.add_argument("--every", type=int, default=60); a.add_argument("--minutes", type=int, default=60)
     a = sub.add_parser("kill"); a.add_argument("action", choices=["on", "status"])
     a = sub.add_parser("options")
-    a.add_argument("action", choices=["price", "greeks", "iv", "chain", "buycheck"])
+    a.add_argument("action", choices=["price", "greeks", "iv", "chain", "buycheck", "pick"])
+    a.add_argument("--expiry", help="YYYY-MM-DD; default the nearest weekly"); a.add_argument("--top", type=int, default=5)
     a.add_argument("--kind", default="CE"); a.add_argument("--spot", type=float); a.add_argument("--strike", type=float)
     a.add_argument("--days", type=float); a.add_argument("--vol", type=float); a.add_argument("--premium", type=float)
     a.add_argument("--underlying", default="NIFTY"); a.add_argument("--file")
@@ -116,6 +130,15 @@ def main(argv=None):
             return out(journal.stats(risk.is_paper(cfg)))
         if args.action == "export":
             return journal.export_csv()
+        if args.action == "add":
+            need = {"symbol": args.id, "--qty": args.qty, "--entry": args.entry, "--stop": args.stop,
+                    "--target": args.target}
+            missing = [k for k, v in need.items() if v is None]
+            if missing:
+                raise SystemExit("journal add needs: " + " ".join(missing))
+            return out(journal.add_trade(args.id, args.side, args.qty, args.segment, args.entry, args.stop,
+                                         args.target, cfg, args.setup, not args.paper, args.opened, args.exit,
+                                         args.underlying, args.underlying_stop, args.underlying_target, args.lot))
         if not args.id or args.price is None:
             raise SystemExit("journal close needs an id (or symbol) and --price")
         return out(journal.close_trade(args.id, args.price, args.reason, profile=cfg["brokerage"]))
@@ -152,6 +175,11 @@ def main(argv=None):
         return out(market.news(cfg.get("news_feeds", market.DEFAULT_FEEDS), syms, args.hours))
 
     data = get_data(cfg)
+    if c == "watch":
+        pr = watch.parse_prices(args.price)
+        if args.loop:
+            return out(watch.loop(cfg, data, args.every, args.minutes, pr, not args.no_trail))
+        return out(watch.check(cfg, data, pr, not args.no_trail))
     if c == "quote":
         return out({"symbol": args.symbol.upper(), "last": data.quote(args.symbol), "sources": cfg["data"]})
     if c == "scan":
@@ -201,7 +229,7 @@ def _options(args, cfg):
     r = cfg["risk_free_rate"]
     need = {"price": ("spot", "strike", "days", "vol"), "greeks": ("spot", "strike", "days", "vol"),
             "iv": ("spot", "strike", "days", "premium"), "chain": ("file", "spot"),
-            "buycheck": ("spot", "strike", "days", "premium")}[args.action]
+            "buycheck": ("spot", "strike", "days", "premium"), "pick": ("file", "spot")}[args.action]
     missing = [n for n in need if getattr(args, n) is None]
     if missing:
         raise SystemExit(f"options {args.action} needs: " + " ".join("--" + m for m in missing))
@@ -213,6 +241,13 @@ def _options(args, cfg):
         return out({"implied_vol": options.implied_vol(args.kind, args.spot, args.strike, args.days, args.premium, r)})
     if args.action == "chain":
         return out(options.chain_stats(options.read_chain(args.file), args.spot))
+    if args.action == "pick":
+        u = args.underlying.upper()
+        days = args.days
+        if days is None:
+            exp = date.fromisoformat(args.expiry) if args.expiry else refdata.weekly_expiry(u, now().date())
+            days = options.days_to_expiry(exp, now())
+        return out(options.pick(options.read_chain(args.file), args.spot, args.kind, days, u, cfg, args.top))
     return out(options.buy_check(args.underlying, args.kind, args.spot, args.strike, args.premium, args.days, cfg))
 
 

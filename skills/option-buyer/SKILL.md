@@ -9,6 +9,7 @@ Built for small accounts. It only supports buying options; selling and futures a
 
 ## Workflow
 
+0. Pick the strike first: save the option chain as a CSV (strike, ce_ltp, ce_oi, pe_ltp, pe_oi; bid/ask optional) and run `dd.py options pick --file chain.csv --spot S --kind CE [--expiry YYYY-MM-DD]`. It ranks strikes the account can afford by delta, time decay, move needed, open interest and spread. If the verdict is NOTHING GOOD FITS, say so and suggest skipping or a later expiry.
 1. `dd.py options buycheck --underlying NIFTY --kind CE --spot S --strike K --premium P --days D`
    Reports cost of one lot, whether it fits the premium cap, breakeven, the move needed, implied volatility, and time decay per day for one lot.
 2. If `affordable` is false or there are warnings, say so first and recommend not taking it.

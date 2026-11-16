@@ -8,6 +8,7 @@ description: "Record, settle and review trades: close a trade with its exit pric
 ## Workflow
 
 - `dd.py paper settle` closes open paper trades against real candles (stop, target or flat-by).
+- `dd.py journal add SYMBOL --qty N --entry E --stop S --target T [--segment ...] [--exit X]` logs a trade the user placed by hand. It counts as real money unless `--paper` is given, and real losses always count against the daily and total loss limits.
 - `dd.py journal close <id-or-symbol> --price X --reason stop|target|manual` records a real exit.
 - `dd.py journal stats` gives win rate, net P&L, charges paid, average R, and results by setup.
 - `dd.py journal list` shows every trade. `dd.py journal export > trades.csv` exports them.
