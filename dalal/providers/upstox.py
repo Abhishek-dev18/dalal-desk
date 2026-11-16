@@ -22,6 +22,7 @@ API = "https://api.upstox.com"
 ORDER_API = "https://api-hft.upstox.com"
 INSTRUMENTS = "https://assets.upstox.com/market-quote/instruments/exchange/NSE.json.gz"
 INDEX_KEYS = {"NIFTY": "NSE_INDEX|Nifty 50", "BANKNIFTY": "NSE_INDEX|Nifty Bank", "INDIAVIX": "NSE_INDEX|India VIX"}
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) dalal-desk/0.2"
 UNITS = {"1m": ("minutes", "1"), "5m": ("minutes", "5"), "15m": ("minutes", "15"), "1d": ("days", "1")}
 
 
@@ -36,7 +37,7 @@ class Upstox:
         self._keys = None
 
     def _req(self, url, body=None):
-        headers = {"Accept": "application/json", "Authorization": f"Bearer {self.token}"}
+        headers = {"Accept": "application/json", "Authorization": f"Bearer {self.token}", "User-Agent": UA}
         data = None
         if body is not None:
             data = json.dumps(body).encode()
@@ -46,12 +47,12 @@ class Upstox:
             with urllib.request.urlopen(req, timeout=20) as r:
                 return json.load(r)
         except urllib.error.HTTPError as e:
-            detail = ""
+            raw = e.read()[:2000].decode("utf-8", "replace")
             try:
-                errs = json.load(e).get("errors") or []
+                errs = json.loads(raw).get("errors") or []
                 detail = "; ".join(f"{x.get('errorCode')}: {x.get('message')}" for x in errs)[:300]
             except Exception:  # noqa: BLE001
-                pass
+                detail = "non-JSON reply (a firewall, not the API): " + " ".join(raw.split())[:160]
             raise RuntimeError(f"Upstox HTTP {e.code} {detail}".strip()) from None
 
     def instrument_key(self, symbol):
@@ -62,7 +63,8 @@ class Upstox:
             if cache.exists() and now().timestamp() - cache.stat().st_mtime < 86400:
                 self._keys = json.loads(cache.read_text())
             else:
-                with urllib.request.urlopen(INSTRUMENTS, timeout=60) as r:
+                req = urllib.request.Request(INSTRUMENTS, headers={"User-Agent": UA})
+                with urllib.request.urlopen(req, timeout=60) as r:
                     rows = json.loads(gzip.decompress(r.read()))
                 self._keys = {x["trading_symbol"]: x["instrument_key"] for x in rows
                               if x.get("segment") == "NSE_EQ" and x.get("instrument_type") == "EQ"}
